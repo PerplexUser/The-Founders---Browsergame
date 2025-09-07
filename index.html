@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Founders — www.perplex.click</title>
+  <style>
+    :root{ --bg:#0f172a; --panel:#0d1324; --panel2:#151c33; --text:#e5e7eb; --muted:#9ca3af; --btn:#243045; --btnh:#32425f; --grid:#182235; --ok:#16a34a; --bad:#dc2626; --ai:#7f1d1d; --player:#1e3a8a; }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#0b1020);color:var(--text);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu}
+    .wrap{max-width:1520px;margin:0 auto;padding:12px;display:grid;grid-template-columns:320px 1fr;gap:12px}
+    header{grid-column:1/-1;background:var(--panel);border:1px solid #223;border-radius:16px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:0;z-index:20}
+    .res{display:flex;gap:8px;flex-wrap:wrap;overflow:auto}
+    .pill{display:flex;gap:6px;align-items:center;background:var(--panel2);padding:4px 8px;border-radius:999px;border:1px solid #2a364f;min-width:84px;justify-content:center}
+    .pill .val{font-variant-numeric:tabular-nums}
+    .toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    button{background:var(--btn);color:var(--text);border:1px solid #2a364f;border-radius:10px;padding:6px 10px;cursor:pointer}
+    button:hover{background:var(--btnh)}
+    button.active{outline:2px solid var(--ok)}
+    input[type=text]{background:#0b1020;border:1px solid #2a364f;color:var(--text);padding:6px 8px;border-radius:8px;min-width:120px}
+    .cam{display:flex;gap:4px}
+
+    .left{background:var(--panel);border:1px solid #223;border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:10px;max-height:calc(100dvh - 100px);position:sticky;top:64px;overflow:auto}
+    .group h3{margin:0 0 6px 0;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+    .builds{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .builds button{display:flex;flex-direction:column;gap:2px;align-items:flex-start}
+    .builds .title{font-weight:600}
+    .builds .cost{font-size:12px;color:var(--muted)}
+    .hint{font-size:12px;color:var(--muted)}
+
+    .board-wrap{background:var(--panel);border:1px solid #223;border-radius:16px;padding:8px;position:relative}
+    .board{--vw:28;--vh:20;--cell:36px;display:grid;grid-template-columns:repeat(var(--vw),var(--cell));grid-auto-rows:var(--cell);gap:2px;background:var(--grid);padding:2px;border-radius:12px;user-select:none}
+    .cell{position:relative;background:transparent;border-radius:6px;display:grid;place-items:center;font-size:12px}
+    .cell .overlay{position:absolute;inset:0;border-radius:6px;pointer-events:none}
+    .cell.valid .overlay{outline:2px solid var(--ok)}
+    .cell.invalid .overlay{outline:2px dashed var(--bad)}
+    .cell .badge{position:absolute;top:4px;right:4px;font-size:12px;background:#0b1e5b;border:1px solid var(--player);padding:2px 6px;border-radius:999px}
+    .cell .badge.ai{background:#3b0e0e;border-color:var(--ai)}
+    .cell .tag{position:absolute;left:4px;bottom:4px;font-size:10px;background:#0008;border:1px solid #345;padding:1px 5px;border-radius:999px}
+    .cell .xmark{position:absolute;inset:0;display:grid;place-items:center;font-size:22px;font-weight:900;color:#ef4444;text-shadow:0 0 6px #000;pointer-events:none}
+    .cell .fog{position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,6,23,.92),rgba(2,6,23,.96));border-radius:6px}
+
+    /* Tile art */
+    .t-grass{background:linear-gradient(135deg,#0f3d22,#155231)}
+    .t-forest{background:repeating-linear-gradient(45deg,#0f3a20 0 10px,#12502a 10px 20px)}
+    .t-mountain{background:radial-gradient(closest-side,#3f3f46,#111),linear-gradient(135deg,#1f2937,#111)}
+    .t-field{background:repeating-linear-gradient(0deg,#5a4a1f 0 6px,#6b561f 6px 12px)}
+    .t-water{background:radial-gradient(circle at 30% 30%,#1b66c9,#0d2a5a)}
+    .t-fish{background:radial-gradient(circle at 60% 40%,#2aa4ff,#0a2d66)}
+
+    /* Context menu */
+    .ctxmenu{position:fixed;background:var(--panel2);border:1px solid #2a364f;border-radius:12px;padding:6px;min-width:240px;z-index:1000;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+    .ctxmenu .title{font-weight:600;padding:6px 8px}
+    .ctxmenu .hint{padding:0 8px 6px 8px;color:var(--muted)}
+    .ctxmenu .actions{display:flex;flex-direction:column;gap:6px;padding:6px}
+    .ctxmenu .actions button{width:100%;text-align:left}
+
+    /* Minimap */
+    .mini{position:absolute;top:10px;right:10px;background:#060a1a;border:1px solid #233;border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:6px;z-index:5}
+    .mini canvas{border-radius:6px;border:1px solid #2a364f;width:160px;height:160px;image-rendering:pixelated}
+    .mini .row{display:flex;gap:6px;align-items:center;justify-content:space-between}
+
+    /* Start & End overlay */
+    .start,.end{position:fixed;inset:0;background:rgba(2,6,23,.92);display:none;align-items:center;justify-content:center;z-index:200}
+    .start.show,.end.show{display:flex}
+    .modal{background:var(--panel2);border:1px solid #2a364f;border-radius:16px;min-width:520px;max-width:760px;padding:18px;box-shadow:0 24px 48px rgba(0,0,0,.5)}
+    .modal h1{margin:0 0 8px 0;font-size:28px}
+    .modal .sub{color:var(--muted);margin-bottom:10px}
+    .art{width:100%;height:auto;border-radius:12px;border:1px solid #2a364f;display:block;background:#0b1020}
+    .legend{display:flex;gap:8px;justify-content:center;color:var(--muted);font-size:12px;margin-top:6px}
+    .start .actions{margin-top:12px;display:flex;gap:8px;justify-content:flex-end}
+
+    .end .box{background:var(--panel2);border:1px solid #2a364f;border-radius:16px;min-width:360px;max-width:520px;padding:16px;box-shadow:0 24px 48px rgba(0,0,0,.5)}
+    .end h1{margin:0 0 6px 0;font-size:28px}
+    .end .stats{font-variant-numeric:tabular-nums}
+
+    footer{grid-column:1/-1;color:var(--muted);font-size:12px;text-align:center;margin-top:6px}
+  </style>
+</head>
+<body>
+  <!-- tiny error badge to catch syntax issues -->
+  <script>
+    window.addEventListener('error', function (e) {
+      var box = document.createElement('div');
+      box.style.cssText = "position:fixed;left:8px;bottom:8px;background:#8b0000;color:#fff;padding:8px 10px;border-radius:8px;z-index:99999;font:12px system-ui";
+      box.textContent = "JS error: " + e.message + " @ " + (e.filename||"") + ":" + (e.lineno||"");
+      document.body.appendChild(box);
+    });
+  </script>
+
+  <div class="wrap">
+    <header>
+      <div class="res" id="resBar"></div>
+      <div class="toolbar">
+        <input id="seedInput" type="text" placeholder="Seed…"/>
+        <button id="btnNewMap">New Map</button>
+        <button id="btnRandSeed">Random Seed</button>
+        <button id="modeBuild" class="active">Build</button>
+        <button id="modeDemolish">Demolish</button>
+        <div class="cam">
+          <button id="camUp">▲</button>
+          <button id="camLeft">◀</button>
+          <button id="camRight">▶</button>
+          <button id="camDown">▼</button>
+          <button id="camCenter">Center</button>
+        </div>
+      </div>
+    </header>
+
+    <aside class="left">
+      <div class="group">
+        <h3>Build</h3>
+        <div class="builds" id="buildPalette"></div>
+        <div class="hint" id="placeHint">Select a building.</div>
+      </div>
+      <div class="group">
+        <h3>Quests</h3>
+        <div id="quests" class="hint"></div>
+      </div>
+    </aside>
+
+    <main class="board-wrap">
+      <div id="board" class="board" aria-label="Game board"></div>
+      <div class="mini">
+        <canvas id="minimap" width="128" height="128"></canvas>
+        <div class="row">
+          <button id="btnMusic">♫ Music</button>
+          <div style="font-size:12px;color:var(--muted)">Click minimap to jump</div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      The Founders v1.0 © 2025 by <a href="https://www.perplex.click" target="_blank">Perplex.click</a>
+    </footer>
+  </div>
+
+  <!-- Start Popup (uses founders.png next to this file) -->
+  <div id="start" class="start show" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h1>The Founders</h1>
+      <div class="sub">Build an economy, expand with towers & castles, survey deposits, and capture the enemy headquarter.</div>
+      <img class="art" src="founders.png" alt="Two realistic knights – blue and red – stare each other down"/>
+      <div class="legend"><span style="color:var(--player)">■</span> You (Dark Blue) · <span style="color:var(--ai)">■</span> Enemy (Dark Red)</div>
+      <div class="actions">
+        <button id="btnStart">Start Game</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- End overlay -->
+  <div id="end" class="end"><div class="box"><h1 id="endTitle">Victory!</h1><div id="endStats" class="stats"></div><div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end"><button id="btnRestart">Restart</button></div></div></div>
+
+  <!-- Main game logic (cache-busted) -->
+  <script defer src="game.js?v=F1"></script>
+
+  <!-- Start Shim (robust: works even if game.js fails) -->
+  <script>
+  (function(){
+    function startShim(){
+      try{ if(window.boot && (!window.State||!window.State.map||!window.State.map.length)){ window.boot(); } }catch(e){}
+      try{ window.Game && window.Game.start ? window.Game.start() : (function(){ var o=document.getElementById('start'); if(o) o.classList.remove('show'); if(window.State) window.State.started=true; })(); }catch(e){}
+    }
+    document.getElementById('btnStart').addEventListener('click', startShim);
+    document.addEventListener('keydown', function(e){ var o=document.getElementById('start'); var open=o && o.classList.contains('show'); if(open && (e.key==='Enter'||e.key===' ')) startShim(); });
+  })();
+  </script>
+</body>
+</html>
