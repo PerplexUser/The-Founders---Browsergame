@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>The Founders — www.perplex.click</title>
+  <title>The Founders</title>
   <style>
     :root{ --bg:#0f172a; --panel:#0d1324; --panel2:#151c33; --text:#e5e7eb; --muted:#9ca3af; --btn:#243045; --btnh:#32425f; --grid:#182235; --ok:#16a34a; --bad:#dc2626; --ai:#7f1d1d; --player:#1e3a8a; }
     *{box-sizing:border-box}
@@ -78,16 +78,6 @@
   </style>
 </head>
 <body>
-  <!-- tiny error badge to catch syntax issues -->
-  <script>
-    window.addEventListener('error', function (e) {
-      var box = document.createElement('div');
-      box.style.cssText = "position:fixed;left:8px;bottom:8px;background:#8b0000;color:#fff;padding:8px 10px;border-radius:8px;z-index:99999;font:12px system-ui";
-      box.textContent = "JS error: " + e.message + " @ " + (e.filename||"") + ":" + (e.lineno||"");
-      document.body.appendChild(box);
-    });
-  </script>
-
   <div class="wrap">
     <header>
       <div class="res" id="resBar"></div>
@@ -112,6 +102,13 @@
         <h3>Build</h3>
         <div class="builds" id="buildPalette"></div>
         <div class="hint" id="placeHint">Select a building.</div>
+        <div class="hint">
+          • <b>Fog</b>: You only see your own territory. Towers/Castles expand territory <b>only when garrisoned (≥1)</b>.<br/>
+          • <b>Conquest</b>: Enemy forts/HQ can be taken only if inside the area of a <b>garrisoned</b> fort. Capturing a fort destroys <b>all enemy buildings</b> in its radius.<br/>
+          • <b>Win/Lose</b>: Capture enemy HQ → <b>Victory</b>; lose your HQ → <b>Defeat</b>.<br/>
+          • <b>Music</b>: Button in the minimap box.<br/>
+          • <b>Quests</b>: Small goals for the start.
+        </div>
       </div>
       <div class="group">
         <h3>Quests</h3>
@@ -131,11 +128,11 @@
     </main>
 
     <footer>
-      The Founders v1.0 © 2025 by <a href="https://www.perplex.click" target="_blank">Perplex.click</a>
+      The Founders - © 2025 by www.perplex.click
     </footer>
   </div>
 
-  <!-- Start Popup (uses founders.png next to this file) -->
+  <!-- Start Popup (with founders.png) -->
   <div id="start" class="start show" role="dialog" aria-modal="true">
     <div class="modal">
       <h1>The Founders</h1>
@@ -151,18 +148,28 @@
   <!-- End overlay -->
   <div id="end" class="end"><div class="box"><h1 id="endTitle">Victory!</h1><div id="endStats" class="stats"></div><div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end"><button id="btnRestart">Restart</button></div></div></div>
 
-  <!-- Main game logic (cache-busted) -->
-  <script defer src="game.js?v=F1"></script>
+  <!-- Main game logic -->
+  <script src="game.js"></script>
 
-  <!-- Start Shim (robust: works even if game.js fails) -->
+  <!-- Start Shim (failsafe) -->
   <script>
   (function(){
     function startShim(){
-      try{ if(window.boot && (!window.State||!window.State.map||!window.State.map.length)){ window.boot(); } }catch(e){}
-      try{ window.Game && window.Game.start ? window.Game.start() : (function(){ var o=document.getElementById('start'); if(o) o.classList.remove('show'); if(window.State) window.State.started=true; })(); }catch(e){}
+      // Try to route to game if available
+      if (window.Game && typeof window.Game.start === 'function') {
+        window.Game.start();
+        return;
+      }
+      // Fallback: hide overlay to avoid being stuck
+      var o = document.getElementById('start');
+      if (o) o.classList.remove('show');
     }
     document.getElementById('btnStart').addEventListener('click', startShim);
-    document.addEventListener('keydown', function(e){ var o=document.getElementById('start'); var open=o && o.classList.contains('show'); if(open && (e.key==='Enter'||e.key===' ')) startShim(); });
+    document.addEventListener('keydown', function(e){
+      var o = document.getElementById('start');
+      var open = o && o.classList && o.classList.contains('show');
+      if (open && (e.key==='Enter' || e.key===' ')) startShim();
+    });
   })();
   </script>
 </body>
